@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NEON QUIZ — Crea retos</title>
+<style>
+:root{--bg:#080b16;--panel:#11182b;--line:#263454;--cyan:#42e8ff;--purple:#a879ff;--text:#edf3ff;--muted:#9aa8c7;--green:#54e6a1}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 15% 0%,#17234a 0,transparent 34%),radial-gradient(circle at 90% 15%,#29174a 0,transparent 30%),var(--bg);color:var(--text);font:16px system-ui,Segoe UI,sans-serif;min-height:100vh}
+header{padding:25px 18px;text-align:center;border-bottom:1px solid #25304b;background:#090d1bd9}h1{margin:0;font-size:clamp(28px,6vw,46px);letter-spacing:3px;text-shadow:0 0 20px #42e8ff70}h1 span{color:var(--cyan)}header p{color:var(--muted);margin:7px 0 0}
+main{max-width:850px;margin:28px auto;padding:0 15px 50px}.panel{background:linear-gradient(145deg,#141d34,#0e1426);border:1px solid var(--line);border-radius:18px;padding:22px;margin:16px 0;box-shadow:0 12px 40px #0005}.hidden{display:none!important}
+h2{margin:0 0 16px;font-size:22px}label{display:block;color:#cbd7f2;margin:13px 0 6px;font-size:14px}input,textarea{width:100%;background:#080e1e;border:1px solid #334365;border-radius:10px;padding:12px;color:white;font:inherit;outline:none}input:focus,textarea:focus{border-color:var(--cyan);box-shadow:0 0 0 3px #42e8ff18}.answers{display:grid;grid-template-columns:1fr 1fr;gap:9px}.answer{display:flex;gap:8px;align-items:center}.answer input[type=text]{flex:1;min-width:0}.answer input[type=radio]{width:auto;accent-color:var(--green)}
+button{border:0;border-radius:10px;padding:12px 17px;background:linear-gradient(100deg,#42dff7,#9a78ff);color:#07101e;font-weight:800;font-size:15px;cursor:pointer;margin:7px 7px 0 0}button.secondary{background:#202c49;color:#dce8ff;border:1px solid #39496e}button:disabled{opacity:.45;cursor:not-allowed}.muted{color:var(--muted);font-size:14px}.question-card{padding:16px;border:1px solid #2b3b5e;border-radius:14px;margin:14px 0;background:#0c1325}.choice{display:block;width:100%;text-align:left;margin:9px 0;background:#182440;color:#eaf2ff;border:1px solid #34466c}.choice.selected{border-color:var(--cyan);background:#163447}.choice.correct{border-color:var(--green)}.score{font-size:48px;font-weight:900;color:var(--green);text-align:center}.row{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}.pill{display:inline-block;padding:5px 10px;border-radius:30px;background:#172847;color:var(--cyan);font-size:12px}.leader{display:flex;justify-content:space-between;padding:12px;border-bottom:1px solid #293754}.leader:last-child{border:0}.notice{padding:12px;border-radius:10px;background:#13213b;color:#c6d6f5;font-size:13px;line-height:1.5}footer{text-align:center;color:#7887a8;font-size:12px;padding:10px}
+@media(max-width:560px){.answers{grid-template-columns:1fr}.panel{padding:17px}}
+</style></head>
+<body>
+<header><h1>NEON <span>QUIZ</span></h1><p>Crea un reto. Compártelo. ¡A ver quién sabe más!</p></header>
+<main>
+<section id="home" class="panel">
+ <div class="row"><h2>Centro de retos</h2><span class="pill">MODO GAMING</span></div>
+ <p class="muted">Crea un cuestionario de opción múltiple o abre uno que te hayan compartido.</p>
+ <button onclick="show('creator')">＋ Crear cuestionario</button>
+ <button class="secondary" onclick="show('join')">Abrir reto compartido</button>
+ <div class="notice" style="margin-top:17px">Esta versión permite compartir el cuestionario mediante un enlace. Para que las puntuaciones se sincronicen y todos las vean desde distintos teléfonos, hace falta publicar la web y conectar una base de datos.</div>
+</section>
+<section id="creator" class="panel hidden">
+ <div class="row"><h2>Crear cuestionario</h2><button class="secondary" onclick="show('home')">Volver</button></div>
+ <label>Nombre del cuestionario</label><input id="quizTitle" placeholder="Ej. ¿Cuánto sabes de Minecraft?">
+ <label>Tu nombre (creador)</label><input id="creatorName" placeholder="Ej. Alex">
+ <div id="builder"></div>
+ <button class="secondary" onclick="addQuestion()">＋ Añadir pregunta</button>
+ <button onclick="makeQuiz()">Crear y compartir</button>
+</section>
+<section id="share" class="panel hidden">
+ <h2>¡Tu reto está listo!</h2><p class="muted">Copia este enlace y envíaselo a tus amigos.</p>
+ <textarea id="shareUrl" rows="4" readonly></textarea><button onclick="copyLink()">Copiar enlace</button>
+ <button class="secondary" onclick="showBoard()">Ver puntuaciones</button>
+ <p class="muted" id="copyStatus"></p>
+</section>
+<section id="join" class="panel hidden">
+ <h2>Entrar a un reto</h2><label>Pega el enlace del cuestionario</label><textarea id="joinUrl" rows="3" placeholder="Pega aquí el enlace que te enviaron"></textarea>
+ <button onclick="openPasted()">Abrir cuestionario</button><button class="secondary" onclick="show('home')">Volver</button>
+</section>
+<section id="play" class="panel hidden">
+ <div class="row"><span class="pill" id="progress"></span><span class="pill">RETO ACTIVO</span></div>
+ <h2 id="playTitle"></h2><label>Tu nombre</label><input id="playerName" placeholder="Escribe tu nombre">
+ <div id="playQuestions"></div><button onclick="submitQuiz()">Enviar respuestas</button>
+</section>
+<section id="result" class="panel hidden">
+ <h2 style="text-align:center">¡Reto completado!</h2><div class="score" id="score"></div><p id="resultText" style="text-align:center"></p>
+ <button onclick="showBoard()">Ver tabla de puntuaciones</button><button class="secondary" onclick="show('home')">Inicio</button>
+</section>
+<section id="board" class="panel hidden">
+ <div class="row"><h2>🏆 Tabla de puntuaciones</h2><button class="secondary" onclick="show('home')">Inicio</button></div>
+ <div id="leaders"></div><p class="muted">Las puntuaciones guardadas aquí pertenecen a este navegador.</p>
+</section>
+</main><footer>NEON QUIZ · Diviértete y juega limpio</footer>
+<script>
+let questions=[],activeQuiz=null,answers={},lastScore=0;
+const $=id=>document.getElementById(id);
+function show(id){document.querySelectorAll('main>section').forEach(s=>s.classList.add('hidden'));$(id).classList.remove('hidden');}
+function addQuestion(data){let i=questions.length;questions.push(data||{q:'',opts:['','','',''],correct:0});renderBuilder();}
+function renderBuilder(){$('builder').innerHTML='';questions.forEach((q,i)=>{let d=document.createElement('div');d.className='question-card';d.innerHTML=`<div class="row"><b>Pregunta ${i+1}</b><button class="secondary" onclick="removeQuestion(${i})">Quitar</button></div><label>Pregunta</label><input data-q="${i}" placeholder="Escribe la pregunta" value="${esc(q.q)}"><label>Respuestas (marca la correcta)</label><div class="answers">${q.opts.map((o,j)=>`<div class="answer"><input type="radio" name="correct${i}" ${q.correct===j?'checked':''} onchange="questions[${i}].correct=${j}"><input type="text" data-i="${i}" data-j="${j}" placeholder="Opción ${j+1}" value="${esc(o)}"></div>`).join('')}</div>`;$('builder').appendChild(d);});$('builder').querySelectorAll('[data-q]').forEach(e=>e.oninput=()=>questions[+e.dataset.q].q=e.value);$('builder').querySelectorAll('[data-i]').forEach(e=>e.oninput=()=>questions[+e.dataset.i].opts[+e.dataset.j]=e.value);}
+function removeQuestion(i){questions.splice(i,1);renderBuilder();}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function encode(obj){return btoa(unescape(encodeURIComponent(JSON.stringify(obj)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+function decode(s){s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';return JSON.parse(decodeURIComponent(escape(atob(s))));}
+function makeQuiz(){if(!questions.length||questions.some(q=>!q.q.trim()||q.opts.some(o=>!o.trim()))){alert('Completa cada pregunta y sus cuatro opciones.');return;}activeQuiz={title:$('quizTitle').value.trim()||'Mi cuestionario',creator:$('creatorName').value.trim()||'Anónimo',questions:questions.map(q=>({...q,opts:[...q.opts]}))};let url=location.href.split('#')[0]+'#quiz='+encode(activeQuiz);$('shareUrl').value=url;show('share');}
+function copyLink(){let t=$('shareUrl');t.select();if(navigator.clipboard&&location.protocol==='https:')navigator.clipboard.writeText(t.value).then(()=>$('copyStatus').textContent='Enlace copiado.');else{$('copyStatus').textContent='Mantén pulsado el enlace para copiarlo.';}}
+function loadQuiz(q){if(!q||!Array.isArray(q.questions)||!q.questions.length){alert('El enlace no contiene un cuestionario válido.');return;}activeQuiz=q;answers={};$('playTitle').textContent=q.title;$('progress').textContent=q.questions.length+' preguntas';$('playQuestions').innerHTML='';q.questions.forEach((item,i)=>{let d=document.createElement('div');d.className='question-card';d.innerHTML=`<b>${i+1}. ${esc(item.q)}</b>`+item.opts.map((o,j)=>`<button class="choice" id="c${i}_${j}" onclick="pick(${i},${j})">${String.fromCharCode(65+j)}. ${esc(o)}</button>`).join('');$('playQuestions').appendChild(d);});show('play');}
+function pick(i,j){answers[i]=j;activeQuiz.questions[i].opts.forEach((_,k)=>{let b=$('c'+i+'_'+k);b.classList.toggle('selected',j===k);});}
+function submitQuiz(){if(!$('playerName').value.trim()){alert('Escribe tu nombre para registrar la puntuación.');return;}if(Object.keys(answers).length!==activeQuiz.questions.length){alert('Responde todas las preguntas antes de enviar.');return;}lastScore=activeQuiz.questions.reduce((n,q,i)=>n+(answers[i]===q.correct?1:0),0);let entry={name:$('playerName').value.trim(),score:lastScore,total:activeQuiz.questions.length,title:activeQuiz.title,date:new Date().toLocaleDateString()};let key='neonquiz_scores_'+encode(activeQuiz).slice(0,24);let list=JSON.parse(localStorage.getItem(key)||'[]');list.push(entry);localStorage.setItem(key,JSON.stringify(list));$('score').textContent=lastScore+' / '+activeQuiz.questions.length;$('resultText').textContent=entry.name+', acertaste '+Math.round(lastScore/entry.total*100)+'% de las preguntas.';show('result');}
+function showBoard(){let key='neonquiz_scores_'+encode(activeQuiz).slice(0,24);let list=JSON.parse(localStorage.getItem(key)||'[]').sort((a,b)=>b.score-a.score);$('leaders').innerHTML=list.length?list.map((x,i)=>`<div class="leader"><span>${i+1}. ${esc(x.name)}</span><b>${x.score}/${x.total}</b></div>`).join(''):'<p class="muted">Todavía no hay puntuaciones en este navegador.</p>';show('board');}
+function openPasted(){try{let u=new URL($('joinUrl').value.trim());let q=u.hash.match(/quiz=(.+)$/);if(!q)throw 0;loadQuiz(decode(q[1]));}catch(e){alert('No pude leer ese enlace. Comprueba que esté completo.');}}
+function routeHash(){if(location.hash.startsWith('#quiz=')){try{loadQuiz(decode(location.hash.slice(6)));}catch(e){show('home');}}}
+if(location.hash)routeHash();else addQuestion();
+</script></body></html>
